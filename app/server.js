@@ -102,6 +102,7 @@ export function postComment(feedItemId, author, contents, cb) {
   // document in the database.
   var feedItem = readDocument('feedItems', feedItemId);
   feedItem.comments.push({
+	"likeCounter": [],
     "author": author,
     "contents": contents,
     "postDate": new Date().getTime()
@@ -145,4 +146,29 @@ export function unlikeFeedItem(feedItemId, userId, cb) {
   }
   // Return a resolved version of the likeCounter
   emulateServerReturn(feedItem.likeCounter.map((userId) => readDocument('users', userId)), cb);
+}
+
+/**
+ * Updates a comment's likeCounter by adding the user to the likeCounter.
+ * Provides an updated likeCounter in the response.
+ */
+export function likeComment(feedItemId, commentId, userId, cb) {
+  var feedItem = readDocument('feedItems', feedItemId);
+  feedItem.comments[commentId].likeCounter.push(userId);
+  writeDocument('feedItems', feedItem);
+  emulateServerReturn(feedItem.comments[commentId].likeCounter.map((userId) => readDocument('users', userId)), cb);
+}
+
+/**
+ * Updates a comment's likeCounter by removing the user from the likeCounter.
+ * Provides an updated likeCounter in the response.
+ */
+export function unlikeComment(feedItemId, commentId, userId, cb) {
+  var feedItem = readDocument('feedItems', feedItemId);
+  var userIndex = feedItem.comments[commentId].likeCounter.indexOf(userId);
+  if (userIndex !== -1) {
+    feedItem.comments[commentId].likeCounter.splice(userIndex, 1);
+    writeDocument('feedItems', feedItem);
+  }
+  emulateServerReturn(feedItem.comments[commentId].likeCounter.map((userId) => readDocument('users', userId)), cb);
 }
